@@ -1,0 +1,9 @@
+{
+    "name": "wapmorgan/serverstat",
+    "description": "",
+    "autoload": {
+        "psr-4": {
+            "wapmorgan\\ServerStat\\": "src/"
+        }
+    }
+}

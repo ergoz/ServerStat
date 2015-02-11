@@ -1,0 +1,24 @@
+#!/usr/bin/php
+<?php
+use wapmorgan\ServerStat\ConfigurationReader;
+use wapmorgan\ServerStat\InformationCollector;
+use wapmorgan\ServerStat\Storage;
+
+require dirname(dirname(__FILE__)).'/vendor/autoload.php';
+$config_reader = new ConfigurationReader();
+$configuration = $config_reader->config;
+switch ($configuration['storage']) {
+    default:
+    case 'file':
+        $storage = new Storage('file');
+    break;
+}
+
+$collector = new InformationCollector();
+
+while (true) {
+    $information = $collector->collect();
+    $storage->save($information);
+    exit();
+    sleep($configuration['period']);
+}
