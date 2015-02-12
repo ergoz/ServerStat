@@ -1,15 +1,14 @@
 <?php
 namespace wapmorgan\ServerStat;
 
-use \COM;
-
 class InformationCollector {
     protected $windows = false;
     protected $linux = false;
+    protected $memoryTotalCache = false;
 
     public function __construct() {
         if (strncasecmp(PHP_OS, 'win', 3) === 0) {
-            $this->windows = true;
+            $this->windows = new WindowsInformation();
         } else {
             $this->linux = true;
         }
@@ -34,18 +33,17 @@ class InformationCollector {
         if ($this->windows)
         {
             echo microtime(true).PHP_EOL;
-            exec('wmic cpu get NumberOfLogicalProcessors', $p);
-            return intval($p[1]);
+            return $this->windows->processorsNumber();
         }
     }
 
     protected function collectProcessorLoad() {
         if ($this->windows)
         {
-            echo microtime(true).PHP_EOL;
-            exec('wmic cpu get LoadPercentage', $p);
-            array_shift($p);
-            return array_sum($p);
+            echo ($pl = microtime(true)).PHP_EOL;
+            $load = $this->windows->processorLoad();
+            //echo 'processor load: '.(microtime(true) - $pl).PHP_EOL;
+            return $load;
         }
     }
 
@@ -53,8 +51,10 @@ class InformationCollector {
         if ($this->windows)
         {
             echo microtime(true).PHP_EOL;
-            exec('wmic computersystem get TotalPhysicalMemory', $p);
-            return floatval($p[1]);
+            if ($this->memoryTotalCache === false)
+                return ($this->memoryTotalCache = $this->windows->totalMemory());
+            else
+                return $this->memoryTotalCache;
         }
     }
 
@@ -62,8 +62,7 @@ class InformationCollector {
         if ($this->windows)
         {
             echo microtime(true).PHP_EOL;
-            exec('wmic os get FreeVirtualMemory', $p);
-            return floatval($p[1]);
+            return $this->windows->freeMemory();
         }
     }
 
@@ -71,9 +70,7 @@ class InformationCollector {
         if ($this->windows)
         {
             echo microtime(true).PHP_EOL;
-            exec('wmic os get TotalSwapSpaceSize', $p);
-            array_shift($p);
-            return array_sum($p);
+            return $this->windows->swapSize();
         }
     }
 
@@ -81,8 +78,7 @@ class InformationCollector {
         if ($this->windows)
         {
             echo microtime(true).PHP_EOL;
-            exec('wmic os get FreeSpaceInPagingFiles', $p);
-            return floatval($p[1]);
+            return $this->windows->freeSwapSize();
         }
     }
 
@@ -90,8 +86,7 @@ class InformationCollector {
         if ($this->windows)
         {
             echo microtime(true).PHP_EOL;
-            exec('tasklist /FO csv', $p);
-            return count($p) - 2;
+            return $this->windows->tasksNumber();
         }
     }
 
@@ -99,8 +94,7 @@ class InformationCollector {
         if ($this->windows)
         {
             echo microtime(true).PHP_EOL;
-            exec('tasklist /FI "STATUS eq RUNNING" /FO csv', $p);
-            return count($p) - 2;
+            return $this->windows->runningTasksNumber();
         }
     }
 
@@ -108,10 +102,7 @@ class InformationCollector {
         if ($this->windows)
         {
             echo microtime(true).PHP_EOL;
-            exec('wmic os get LastBootUpTime', $p);
-            $v = trim($p[1]);
-            $time = mktime(substr($v, 8, 2), substr($v, 10, 2), substr($v, 12, 2), substr($v, 4, 2), substr($v, 6, 2), substr($v, 0, 4));
-            return time() - $time;
+            return $this->windows->uptime();
         }
     }
 }
