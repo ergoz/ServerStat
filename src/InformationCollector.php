@@ -35,6 +35,11 @@ class InformationCollector {
             echo microtime(true).PHP_EOL;
             return $this->windows->processorsNumber();
         }
+        else
+        {
+            echo microtime(true).PHP_EOL;
+            return substr_count(file_get_contents('/proc/cpuinfo'), 'processor');
+        }
     }
 
     protected function collectProcessorLoad() {
@@ -44,6 +49,14 @@ class InformationCollector {
             $load = $this->windows->processorLoad();
             //echo 'processor load: '.(microtime(true) - $pl).PHP_EOL;
             return $load;
+        }
+        else
+        {
+            echo microtime(true).PHP_EOL;
+            exec('top -bn1 | head -n3', $p);
+            $line = $p[2];
+            preg_match('~([0-9.,]+) id~', $line, $load);
+            return $load[1];
         }
     }
 
@@ -56,6 +69,13 @@ class InformationCollector {
             else
                 return $this->memoryTotalCache;
         }
+        else
+        {
+            echo microtime(true).PHP_EOL;
+            $meminfo = file('/proc/meminfo');
+            $line = explode(' ', $meminfo[0]);
+            return $line[count($line) - 2];
+        }
     }
 
     protected function collectMemoryFree() {
@@ -63,6 +83,14 @@ class InformationCollector {
         {
             echo microtime(true).PHP_EOL;
             return $this->windows->freeMemory();
+        }
+        else
+        {
+            echo microtime(true).PHP_EOL;
+            $meminfo = file('/proc/meminfo');
+            $line = explode(' ', $meminfo[1]);
+            return $line[count($line) - 2];
+
         }
     }
 
@@ -72,6 +100,17 @@ class InformationCollector {
             echo microtime(true).PHP_EOL;
             return $this->windows->swapSize();
         }
+        else
+        {
+            echo microtime(true).PHP_EOL;
+            $meminfo = file('/proc/meminfo');
+            foreach ($meminfo as $l)
+            {
+                $line = explode(' ', $l);
+                if ($line[0] == 'SwapTotal:')
+                    return $line[count($line) - 2];
+            }
+        }
     }
 
     protected function collectSwapFree() {
@@ -79,6 +118,18 @@ class InformationCollector {
         {
             echo microtime(true).PHP_EOL;
             return $this->windows->freeSwapSize();
+        }
+        else
+        {
+            echo microtime(true).PHP_EOL;
+            $meminfo = file('/proc/meminfo');
+            foreach ($meminfo as $l)
+            {
+                $line = explode(' ', $l);
+                if ($line[0] == 'SwapFree:')
+                    return $line[count($line) - 2];
+            }
+
         }
     }
 
@@ -88,6 +139,12 @@ class InformationCollector {
             echo microtime(true).PHP_EOL;
             return $this->windows->tasksNumber();
         }
+        else
+        {
+            echo microtime(true).PHP_EOL;
+            exec('ps -aux', $p);
+            return count($p) - 1;
+        }
     }
 
     protected function collectTasksRunningNumber() {
@@ -96,6 +153,13 @@ class InformationCollector {
             echo microtime(true).PHP_EOL;
             return $this->windows->runningTasksNumber();
         }
+        else
+        {
+            echo microtime(true).PHP_EOL;
+            exec('ps -auxr', $p);
+            return count($p) - 1;
+        }
+
     }
 
     protected function collectUptime() {
@@ -103,6 +167,13 @@ class InformationCollector {
         {
             echo microtime(true).PHP_EOL;
             return $this->windows->uptime();
+        }
+        else
+        {
+            echo microtime(true).PHP_EOL;
+            exec('uptime --since', $o);
+            $time = strtotime($o[0]);
+            return time() - $time;
         }
     }
 }
