@@ -56,7 +56,7 @@ class InformationCollector {
             exec('top -bn1 | head -n3', $p);
             $line = $p[2];
             preg_match('~([0-9.,]+) id~', $line, $load);
-            return $load[1];
+            return 100 - $load[1];
         }
     }
 
